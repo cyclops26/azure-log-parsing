@@ -26,11 +26,13 @@ def add_key(key):
 
 # Read the CSV file
 with open(input_file, 'r') as f:
+    print("Parsing ...", end="")
     csv_data = csv.DictReader(f)
 
     new_structure = []
 
     for row in csv_data:
+        print(".", end="")
         # Convert the CSV row into a dictionary
         row_dict = dict(row)
         for key in row_dict.keys():
@@ -40,6 +42,18 @@ with open(input_file, 'r') as f:
             key_name = 'AuditData_%s' % key
             add_key(key_name)
             row_dict[key_name] = value
+            if key in ['ExtendedProperties', 'ModifiedProperties', 'Actor', 'Target', 'DeviceProperties']:
+                for index, property in enumerate(value):
+                    property_name = '%s_%s' % (key_name, index)
+                    for sub_key, sub_value in property.items():
+                        sub_key_name = '%s_%s' % (property_name, sub_key)
+                        add_key(sub_key_name)
+                        row_dict[sub_key_name] = sub_value
+            if key in ['AppAccessContext']:
+                for sub_key in value.keys():
+                    sub_key_name = '%s_%s' % (key_name, sub_key)
+                    add_key(sub_key_name)
+                    row_dict[sub_key_name] = value[sub_key]
         # Add the dictionary to the new structure
         new_structure.append(row_dict)
 
@@ -48,3 +62,6 @@ with open(input_file, 'r') as f:
         csv_writer = csv.DictWriter(fw, fieldnames=field_names)
         csv_writer.writeheader()
         csv_writer.writerows(new_structure)
+
+print ("")
+print ("Done!")
